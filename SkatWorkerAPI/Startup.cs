@@ -51,7 +51,7 @@ namespace SkatWorkerAPI
         {
             var settings = _configuration.GetSection("Settings").Get<Settings>();
 
-            string connectionString = $"Data Source = " + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Database", "wfdb.db");
+            string connectionString = $"Data Source = " + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wfdb.db");
             string pathToLog = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
 
             if (settings != null && !string.IsNullOrEmpty(settings.ConnectionString))
@@ -62,6 +62,7 @@ namespace SkatWorkerAPI
 
             services.AddSerilog(x =>
             {
+                x.WriteTo.Console();
                 x.WriteTo.File(Path.Combine(pathToLog, $"{DateTime.Now.Year}-{DateTime.Now.Month}-{DateTime.Now.Day}.txt"));
             });
 

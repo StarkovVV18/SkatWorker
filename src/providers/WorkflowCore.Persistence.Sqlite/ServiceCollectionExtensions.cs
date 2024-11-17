@@ -13,6 +13,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             options.UsePersistence(sp => new EntityFrameworkPersistenceProvider(new SqliteContextFactory(connectionString), canCreateDB, false));
             options.Services.AddTransient<IWorkflowPurger>(sp => new WorkflowPurger(new SqliteContextFactory(connectionString)));
+
             return options;
         }
     }

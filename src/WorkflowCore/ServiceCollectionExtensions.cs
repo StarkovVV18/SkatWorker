@@ -59,7 +59,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.AddTransient<IBackgroundTask>(sp => sp.GetService<ILifeCycleEventPublisher>());
             
-            services.AddTransient<IBackgroundTask, RunnableTaskSchedule>();
+            services.AddTransient<IBackgroundTask, MonitoringTasksSchedule>();
             services.AddTransient<IBackgroundTask, CompletionTaskSchedule>();
 
             services.AddTransient<IWorkflowErrorHandler, CompensateHandler>();

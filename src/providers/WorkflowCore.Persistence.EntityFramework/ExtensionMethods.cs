@@ -83,6 +83,20 @@ namespace WorkflowCore.Persistence.EntityFramework
             result.Version = instance.Version;
             result.InstanceId = instance.InstanceId;
 
+            // Период запуска задачи.
+
+            result.Interval = instance.Interval;
+            result.StartAt = instance.StartAt;
+            result.TimePeriod = instance.TimePeriod;
+
+            result.Periodicity = instance.Periodicity;
+            result.DaysOfMonthSch = instance.DaysOfMonthSch;
+            result.DaysOfWeekSch = instance.DaysOfWeekSch;
+
+            result.LastExecuted = instance.LastExecuted;
+            result.NextExecuted = instance.NextExecuted;
+            result.Retry = instance.Retry;
+
             return result;
         }
 
@@ -99,6 +113,19 @@ namespace WorkflowCore.Persistence.EntityFramework
             result.Data = JsonConvert.SerializeObject(instance.Data, SerializerSettings);
             result.Version = instance.Version;
             result.InstanceId = instance.InstanceId;
+
+            // Период запуска задачи.
+            result.Interval = instance.Interval;
+            result.StartAt = instance.StartAt;
+            result.TimePeriod = instance.TimePeriod;
+
+            result.Periodicity = instance.Periodicity;
+            result.DaysOfMonthSch = instance.DaysOfMonthSch;
+            result.DaysOfWeekSch = instance.DaysOfWeekSch;
+
+            result.LastExecuted = instance.LastExecuted;
+            result.NextExecuted = instance.NextExecuted;
+            result.Retry = instance.Retry;
 
             return result;
         }
