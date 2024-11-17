@@ -75,10 +75,10 @@ namespace WorkflowCore.Models
         /// </summary>
         public Interval? Interval { get; set; }
 
-        /// <summary>
-        /// Начало в (дата запуска задачи в интервале).
-        /// </summary>
-        public DateTime? StartAt { get; set; }
+        ///// <summary>
+        ///// Начало в (дата запуска задачи в интервале).
+        ///// </summary>
+        //public DateTime? StartAt { get; set; }
 
         /// <summary>
         /// Период запуска задачи.

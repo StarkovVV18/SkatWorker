@@ -86,7 +86,7 @@ namespace WorkflowCore.Persistence.EntityFramework
             // Период запуска задачи.
 
             result.Interval = instance.Interval;
-            result.StartAt = instance.StartAt;
+            //result.StartAt = instance.StartAt;
             result.TimePeriod = instance.TimePeriod;
 
             result.Periodicity = instance.Periodicity;
@@ -116,7 +116,7 @@ namespace WorkflowCore.Persistence.EntityFramework
 
             // Период запуска задачи.
             result.Interval = instance.Interval;
-            result.StartAt = instance.StartAt;
+            //result.StartAt = instance.StartAt;
             result.TimePeriod = instance.TimePeriod;
 
             result.Periodicity = instance.Periodicity;

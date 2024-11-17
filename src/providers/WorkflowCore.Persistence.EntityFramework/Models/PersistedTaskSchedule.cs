@@ -76,10 +76,10 @@ namespace WorkflowCore.Persistence.EntityFramework.Models
         /// </summary>
         public Interval? Interval { get; set; }
 
-        /// <summary>
-        /// Дата запуска задачи в интервале.
-        /// </summary>
-        public DateTime? StartAt { get; set; }
+        ///// <summary>
+        ///// Дата запуска задачи в интервале.
+        ///// </summary>
+        //public DateTime? StartAt { get; set; }
 
         /// <summary>
         /// Период запуска задачи.
