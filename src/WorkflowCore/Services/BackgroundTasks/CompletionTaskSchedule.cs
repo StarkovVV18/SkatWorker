@@ -28,7 +28,7 @@ namespace WorkflowCore.Services.BackgroundTasks
 
         public void Start()
         {
-            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunTaskSchedule), null, TimeSpan.FromSeconds(0), TimeSpan.FromMinutes(5));
+            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunTaskSchedule), null, TimeSpan.FromSeconds(0), TimeSpan.FromMinutes(1));
         }
 
         public void Stop()
@@ -64,26 +64,35 @@ namespace WorkflowCore.Services.BackgroundTasks
 
             foreach (var task in taskSchedules)
             {
-                _logger.LogInformation($"Try mark task {task.Id} like completed");
+                _logger.LogInformation($"Try mark task {task.Id} as completed");
 
                 try
                 {
                     WorkflowInstance wfInstance = await _persistenceProvider.GetWorkflowInstance(task.InstanceId);
 
                     if (wfInstance == null)
-                        return;
+                        continue;
 
-                    if (wfInstance.CompleteTime != null)
+                    if (wfInstance.CompleteTime != null && (task.CompleteTime == null && task.IsProcessed))
+                    {
                         await _persistenceProvider.MarkTaskScheduleCompleted(task.Id, wfInstance.CompleteTime.Value);
+                        _logger.LogInformation($"Task {task.Id} mark as completed with workflow {wfInstance.Id}");
+                    }
 
-                    return;
+                    if (wfInstance.CompleteTime == null && wfInstance.Status == WorkflowStatus.Complete)
+                    {
+                        await _persistenceProvider.MarkTaskScheduleCompleted(task.Id, DateTime.Now);
+                        _logger.LogInformation($"Workflow {wfInstance.Id} is not completed but status is Completed, so task {task.Id} mark as completed.");
+                    }
+
+                    continue;
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError($"Workflow {task.WorkflowId} failed to mark completed. Exception message {ex.Message}");
                     await _persistenceProvider.MarkTaskScheduleUnCompleted(task.Id);
 
-                    return;
+                    continue;
                 }
             }
         }

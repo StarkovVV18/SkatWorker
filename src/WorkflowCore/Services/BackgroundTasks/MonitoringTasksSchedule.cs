@@ -73,17 +73,6 @@ namespace WorkflowCore.Services.BackgroundTasks
 
             try
             {
-                var definition = _workflowRegistry.GetDefinition(task.WorkflowId);
-
-                if (definition == null)
-                {
-                    _logger.LogError($"Workflow {task.WorkflowId} not started. Exception message {ex.Message}");
-                    await _persistenceProvider.MarkTaskScheduleUnprocessed(task.Id);
-
-                    return;
-                }
-
-                var dataTypeInstance = JsonConvert.DeserializeObject(task.Data, definition.DataType);
                 string startedWf = await _workflowController.StartWorkflow(task.WorkflowId, task.Version, task.Data);
                 WorkflowInstance wfInstance = await _persistenceProvider.GetWorkflowInstance(startedWf);
 

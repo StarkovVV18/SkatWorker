@@ -60,6 +60,10 @@ namespace SkatWorkerAPI.Controllers
 
             var dataTypeInstance = JsonConvert.DeserializeObject(param.Data, definition.DataType);
             var taskSchedule = _mapper.Map<TaskSchedule>(param);
+
+            // TODO: Переделать.
+            taskSchedule.Data = dataTypeInstance;
+
             var result = await _persistenceProvider.CreateTaskSchedule(taskSchedule);
 
             return Ok(_mapper.Map<TaskScheduleResponse>(result));
