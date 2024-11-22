@@ -62,7 +62,8 @@ namespace SkatWorkerAPI
 
             services.AddSerilog(x =>
             {
-                x.WriteTo.File(Path.Combine(pathToLog, $"{DateTime.Now.ToString("yyyy-MM-dd")}.log"));
+                x.WriteTo.Console();
+                x.WriteTo.File(Path.Combine(pathToLog, $"{DateTime.Now.Year}-{DateTime.Now.Month}-{DateTime.Now.Day}.txt"));
             });
 
             services.AddControllers();
