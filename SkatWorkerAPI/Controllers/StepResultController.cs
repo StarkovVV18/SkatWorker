@@ -41,12 +41,6 @@ namespace SkatWorkerAPI.Controllers
                                                                             && string.Equals(x.WorkflowId.ToLower(), request.WorkflowId.ToLower())
                                                                             && x.Version == request.Version);
 
-            if (!stepResults.Any())
-                return NotFound(new NotFoundResponse(string.Format("Не удалось найти результаты выполнения по запущенной задаче {0} с версией {1} и идентификатором {2}",
-                    request.WorkflowId,
-                    request.Version,
-                    request.InstanceId)));
-
             return Ok(_mapper.Map<List<StepResultResponse>>(stepResults));
 
         }

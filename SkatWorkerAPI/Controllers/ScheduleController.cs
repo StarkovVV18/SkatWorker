@@ -36,11 +36,6 @@ namespace SkatWorkerAPI.Controllers
         public async Task<ActionResult<IEnumerable<TaskScheduleResponse>>> GetSchedule()
         {
             var schedules = await _persistenceProvider.GetTaskSchedules();
-
-            if (schedules == null)
-                return NotFound(new NotFoundResponse("Отсутствуют задачи в расписании."));
-
-
             return Ok(_mapper.Map<List<TaskScheduleResponse>>(schedules));
         }
 
