@@ -36,12 +36,12 @@ namespace SkatWorker.Workflows.Public.Steps.SystemService
         /// <summary>
         /// Результат работы.
         /// </summary>
-        public bool Result { get; set; }
+        private bool Result { get; set; }
 
         /// <summary>
         /// Результат состояния.
         /// </summary>
-        public ServiceControllerStatus SystemServiceResult { get; set; }
+        private ServiceControllerStatus SystemServiceResult { get; set; }
 
         public SystemService(ILogger<SystemService> logger, IPersistenceProvider persistenceProvider)
         {

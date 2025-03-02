@@ -13,8 +13,7 @@ namespace SkatWorker.Workflows.Workflows.SystemService
         {
             builder.StartWith<SkatWorker.Workflows.Public.Steps.SystemService.SystemService>()
                 .Input(step => step.ServiceName, data => data.ServiceName)
-                .Input(step => step.SystemServiceCommand, data => data.SystemServiceCommand)
-                .Input(step => step.SystemServiceResult, data => data.SystemServiceResult);
+                .Input(step => step.SystemServiceCommand, data => data.SystemServiceCommand);
         }
     }
 }

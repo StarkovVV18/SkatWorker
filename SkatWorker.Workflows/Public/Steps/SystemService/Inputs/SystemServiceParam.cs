@@ -13,15 +13,5 @@ namespace SkatWorker.Workflows.Public.Steps.SystemService.Inputs
         /// Действие над службой.
         /// </summary>
         public SystemServiceCommand SystemServiceCommand { get; set; }
-
-        /// <summary>
-        /// Результат работы.
-        /// </summary>
-        public bool Result { get; set; }
-
-        /// <summary>
-        /// Результат состояния.
-        /// </summary>
-        public ServiceControllerStatus SystemServiceResult { get; set; }
     }
 }
