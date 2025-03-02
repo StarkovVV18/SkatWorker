@@ -56,10 +56,13 @@ namespace SkatWorkerAPI.Controllers
             var definition = _workflowRegistry.GetDefinition(param.WorkflowId);
 
             if (definition == null)
-                return NotFound(new NotFoundResponse(string.Format("Не удалось найти задачу с идентификатором {0}",param.WorkflowId)));
+                return NotFound(new NotFoundResponse(string.Format("Не удалось найти определение задачи с идентификатором {0}", param.WorkflowId)));
 
             var dataTypeInstance = JsonConvert.DeserializeObject(param.Data, definition.DataType);
             var taskSchedule = _mapper.Map<TaskSchedule>(param);
+
+            taskSchedule.Data = dataTypeInstance;
+
             var result = await _persistenceProvider.CreateTaskSchedule(taskSchedule);
 
             return Ok(_mapper.Map<TaskScheduleResponse>(result));
