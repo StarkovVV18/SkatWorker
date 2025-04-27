@@ -43,7 +43,7 @@ namespace WorkflowCore.Models
         /// <summary>
         /// Признак того, что задач выполняется.
         /// </summary>
-        public bool IsProcessed { get; set; }
+        public bool? IsProcessed { get; set; }
 
         /// <summary>
         /// Входные данные задачи.
@@ -75,13 +75,13 @@ namespace WorkflowCore.Models
         /// </summary>
         public Interval? Interval { get; set; }
 
-        ///// <summary>
-        ///// Начало в (дата запуска задачи в интервале).
-        ///// </summary>
-        //public DateTime? StartAt { get; set; }
+        /// <summary>
+        /// Начало в (дата запуска задачи в периоде).
+        /// </summary>
+        public DateTime? StartAt { get; set; }
 
         /// <summary>
-        /// Период запуска задачи.
+        /// Период запуска задачи (в минутах).
         /// </summary>
         public Int32? TimePeriod { get; set; }
 

@@ -33,7 +33,7 @@ namespace WorkflowCore.Services.BackgroundTasks
 
         public void Start()
         {
-            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunMonitoring), null, TimeSpan.FromSeconds(0), TimeSpan.FromMinutes(20));
+            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunMonitoring), null, TimeSpan.FromSeconds(0), TimeSpan.FromMinutes(1));
         }
 
         public void Stop()
@@ -94,7 +94,7 @@ namespace WorkflowCore.Services.BackgroundTasks
         /// </summary>
         private async Task StartOneTimeTasks()
         {
-            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.StartTime <= DateTime.Now && x.CompleteTime == null && !x.IsProcessed);
+            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.StartTime <= DateTime.Now && x.CompleteTime == null && !x.IsProcessed.GetValueOrDefault());
 
             if (!taskSchedules.Any())
             {
@@ -112,86 +112,105 @@ namespace WorkflowCore.Services.BackgroundTasks
         /// <remarks>Запускает задачи, у которых настроено расписание повторения.</remarks>
         private async Task StartTasksInPeriod()
         {
-            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.Retry.GetValueOrDefault());
+            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.Retry.GetValueOrDefault() && !x.IsProcessed.GetValueOrDefault());
 
             if (!taskSchedules.Any())
             {
                 _logger.LogInformation("Tasks for retry today or earlier not found");
                 return;
             }
-
+            
             var currentDate = DateTime.Now;
 
-            // Задачи для ежедневного запуска.
-            var taskOnceADay = taskSchedules.Where(x => x.Interval == Models.Enums.Interval.OnceADay);
-
-            foreach (var task in taskOnceADay)
+            foreach (var task in taskSchedules)
             {
-                // Запускаем задачи по периодичности.
-
-                // Каждый день.
-                if (task.Periodicity == Models.Enums.Periodicity.Everyday && task.StartTime <= currentDate)
+                // Проверка на выполнения задачи на текущий день.
+                if (task.Interval == Models.Enums.Interval.OnceADay)
                 {
-                    this.StartWorkflowFromSchedule(task);
-                    continue;
-                }
-
-                // Еженедельно.
-                if (task.Periodicity == Models.Enums.Periodicity.Weekly)
-                {
-                    /*
-                    1 - Monday понедельник.
-                    2 - Tuesday вторник.
-                    3 - Wednesday среду.
-                    4 - Thursday четверг.
-                    5 - Friday пятницу
-                    6 - Saturday субботу
-                    0 - Sunday воскресенье.
-                    */
-
-                    var currentDayOfWeek = currentDate.DayOfWeek;
-                    var daysOfWeek = task.DaysOfWeekSch.Split(',');
-
-                    if (daysOfWeek.Contains(currentDayOfWeek.ToString()))
-                        this.StartWorkflowFromSchedule(task);
+                    if (task.LastExecuted == currentDate.AddDays(-1) && task.NextExecuted == currentDate)
+                        this.CheckConditionAndStartTask(task);
 
                     continue;
                 }
 
-                // По числам.
-                if (task.Periodicity == Models.Enums.Periodicity.DaysOfMonth)
+                // Проверка на выполнения задачи в течение дня.
+                if (task.Interval == Models.Enums.Interval.DuringDay)
                 {
-                    var currentDay = currentDate.Day;
-                    var daysOfMonth = task.DaysOfMonthSch.Split(',');
-
-                    if (daysOfMonth.Contains(currentDay.ToString()))
-                        this.StartWorkflowFromSchedule(task);
+                    if (task.LastExecuted != currentDate && task.NextExecuted == currentDate)
+                        this.CheckConditionAndStartTask(task);
 
                     continue;
                 }
             }
+        }
 
-            // Задачи для запуска в периоде.
-            var taskDuringDay = taskSchedules.Where(x => x.Interval == Models.Enums.Interval.DuringDay);
+        /// <summary>
+        /// Проверит условия запуска задачи и в случае успеха запустить.
+        /// </summary>
+        /// <param name="taskSchedule">Расписание запуска задачи.</param>
+        private void CheckConditionAndStartTask(TaskSchedule taskSchedule)
+        {
+            var currentDate = DateTime.Now;
 
-            foreach (var task in taskDuringDay)
+            // Каждый день.
+            if (taskSchedule.Periodicity == Models.Enums.Periodicity.Everyday && taskSchedule.StartTime <= currentDate)
             {
-                var taskPeriod = task.TimePeriod;
-                var lastExecute = task.LastExecuted;
-                var nextExecute = task.NextExecuted;
-                var different = currentDate.Subtract(lastExecute.GetValueOrDefault());
-
-                if (lastExecute == null && nextExecute == null)
-                {
-                    this.StartWorkflowFromSchedule(task);
-                    continue;
-                }
-
-                if (different.Minutes >= taskPeriod && task.CompleteTime.HasValue)
-                    this.StartWorkflowFromSchedule(task);
-
-                continue;
+                this.StartWorkflowFromSchedule(taskSchedule);
+                return;
             }
+
+            // Еженедельно.
+            if (taskSchedule.Periodicity == Models.Enums.Periodicity.Weekly)
+            {
+                /*
+                1 - Monday понедельник.
+                2 - Tuesday вторник.
+                3 - Wednesday среду.
+                4 - Thursday четверг.
+                5 - Friday пятницу
+                6 - Saturday субботу
+                0 - Sunday воскресенье.
+                */
+
+                var currentDayOfWeek = currentDate.DayOfWeek;
+                var daysOfWeek = taskSchedule.DaysOfWeekSch.Split(',');
+
+                if (daysOfWeek.Contains(currentDayOfWeek.ToString()))
+                    this.StartWorkflowFromSchedule(taskSchedule);
+
+                return;
+            }
+
+            // По числам.
+            if (taskSchedule.Periodicity == Models.Enums.Periodicity.DaysOfMonth)
+            {
+                var currentDay = currentDate.Day;
+                var daysOfMonth = taskSchedule.DaysOfMonthSch.Split(',');
+
+                if (daysOfMonth.Contains(currentDay.ToString()))
+                    this.StartWorkflowFromSchedule(taskSchedule);
+
+                return;
+            }
+
+            //if (taskSchedule.Interval == Models.Enums.Interval.DuringDay)
+            //{
+            //    var taskPeriod = taskSchedule.TimePeriod;
+            //    var lastExecute = taskSchedule.LastExecuted;
+            //    var nextExecute = taskSchedule.NextExecuted;
+            //    var different = currentDate.Subtract(lastExecute.GetValueOrDefault());
+
+            //    if (lastExecute == null && nextExecute == null)
+            //    {
+            //        this.StartWorkflowFromSchedule(taskSchedule);
+            //        return;
+            //    }
+
+            //    if (different.Minutes >= taskPeriod && taskSchedule.CompleteTime.HasValue)
+            //        this.StartWorkflowFromSchedule(taskSchedule);
+
+            //    return;
+            //}
         }
     }
 }

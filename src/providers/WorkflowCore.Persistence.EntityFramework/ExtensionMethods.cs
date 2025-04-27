@@ -109,7 +109,7 @@ namespace WorkflowCore.Persistence.EntityFramework
             result.StartTime = instance.StartTime;
             result.CompleteTime = instance.CompleteTime;
             result.Result = instance.Result;
-            result.IsProcessed = instance.IsProcessed;
+            result.IsProcessed = instance.IsProcessed.GetValueOrDefault();
             result.Data = JsonConvert.SerializeObject(instance.Data, SerializerSettings);
             result.Version = instance.Version;
             result.InstanceId = instance.InstanceId;

@@ -448,7 +448,7 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
             }
         }
 
-        public async Task MarkTaskScheduleCompleted(string id, DateTime completeTime, CancellationToken cancellationToken = default)
+        public async Task MarkTaskScheduleCompleted(string id, DateTime completeTime, DateTime nextExecuted, CancellationToken cancellationToken = default)
         {
             using (var db = ConstructDbContext())
             {
@@ -462,6 +462,7 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
                 var firstRow = existingEntity.FirstOrDefault();
                 firstRow.IsProcessed = false;
                 firstRow.CompleteTime = completeTime;
+                firstRow.NextExecuted = nextExecuted;
 
                 await db.SaveChangesAsync(cancellationToken);
             }
