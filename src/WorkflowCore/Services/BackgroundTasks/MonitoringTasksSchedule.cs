@@ -94,7 +94,10 @@ namespace WorkflowCore.Services.BackgroundTasks
         /// </summary>
         private async Task StartOneTimeTasks()
         {
-            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.StartTime <= DateTime.Now && x.CompleteTime == null && !x.IsProcessed.GetValueOrDefault());
+            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.StartTime <= DateTime.Now
+                && x.CompleteTime == null
+                && !x.IsProcessed.GetValueOrDefault()
+                && !x.Retry.GetValueOrDefault());
 
             if (!taskSchedules.Any())
             {
@@ -134,13 +137,13 @@ namespace WorkflowCore.Services.BackgroundTasks
                 }
 
                 // Проверка на выполнения задачи в течение дня.
-                if (task.Interval == Models.Enums.Interval.DuringDay)
-                {
-                    if (task.LastExecuted != currentDate && task.NextExecuted == currentDate)
+                //if (task.Interval == Models.Enums.Interval.DuringDay)
+                //{
+                    //if (task.LastExecuted != currentDate && task.NextExecuted == currentDate)
                         this.CheckConditionAndStartTask(task);
 
-                    continue;
-                }
+                    //continue;
+                //}
             }
         }
 
