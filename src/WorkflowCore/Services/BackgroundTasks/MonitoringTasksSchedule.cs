@@ -33,7 +33,7 @@ namespace WorkflowCore.Services.BackgroundTasks
 
         public void Start()
         {
-            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunMonitoring), null, TimeSpan.FromSeconds(0), TimeSpan.FromMinutes(1));
+            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunMonitoring), null, TimeSpan.FromSeconds(0), TimeSpan.FromMinutes(5));
         }
 
         public void Stop()
@@ -130,7 +130,8 @@ namespace WorkflowCore.Services.BackgroundTasks
                 // Проверка на выполнения задачи на текущий день.
                 if (task.Interval == Models.Enums.Interval.OnceADay)
                 {
-                    if (task.LastExecuted == currentDate.AddDays(-1) && task.NextExecuted == currentDate)
+                    if ((!task.NextExecuted.HasValue || !task.LastExecuted.HasValue)
+                        || (task.LastExecuted == currentDate.AddDays(-1) && task.NextExecuted == currentDate))
                         this.CheckConditionAndStartTask(task);
 
                     continue;
@@ -156,7 +157,9 @@ namespace WorkflowCore.Services.BackgroundTasks
             var currentDate = DateTime.Now;
 
             // Каждый день.
-            if (taskSchedule.Periodicity == Models.Enums.Periodicity.Everyday && taskSchedule.StartTime <= currentDate)
+            if (taskSchedule.Periodicity == Models.Enums.Periodicity.Everyday
+                && taskSchedule.StartTime <= currentDate
+                && (!taskSchedule.NextExecuted.HasValue || taskSchedule.NextExecuted.Value == currentDate))
             {
                 this.StartWorkflowFromSchedule(taskSchedule);
                 return;
@@ -175,7 +178,7 @@ namespace WorkflowCore.Services.BackgroundTasks
                 0 - Sunday воскресенье.
                 */
 
-                var currentDayOfWeek = currentDate.DayOfWeek;
+                var currentDayOfWeek = (int)currentDate.DayOfWeek;
                 var daysOfWeek = taskSchedule.DaysOfWeekSch.Split(',');
 
                 if (daysOfWeek.Contains(currentDayOfWeek.ToString()))

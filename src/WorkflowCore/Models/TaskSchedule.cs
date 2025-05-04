@@ -78,7 +78,7 @@ namespace WorkflowCore.Models
         /// <summary>
         /// Начало в (дата запуска задачи в периоде).
         /// </summary>
-        public DateTime? StartAt { get; set; }
+        //public DateTime? StartAt { get; set; }
 
         /// <summary>
         /// Период запуска задачи (в минутах).

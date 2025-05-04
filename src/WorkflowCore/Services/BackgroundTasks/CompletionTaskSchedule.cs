@@ -28,7 +28,7 @@ namespace WorkflowCore.Services.BackgroundTasks
 
         public void Start()
         {
-            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunTaskSchedule), null, TimeSpan.FromSeconds(0), TimeSpan.FromMinutes(5));
+            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunTaskSchedule), null, TimeSpan.FromSeconds(0), TimeSpan.FromMinutes(2));
         }
 
         public void Stop()
@@ -73,17 +73,17 @@ namespace WorkflowCore.Services.BackgroundTasks
                     if (wfInstance == null)
                         continue;
 
-                    var nextExecuted = this.GetNextExecutedTime(task);
+                    var nextExecuted = this.GetNextExecutedTime(task, wfInstance);
 
                     if (wfInstance.CompleteTime != null && (task.CompleteTime == null && task.IsProcessed.GetValueOrDefault()))
                     {
-                        await _persistenceProvider.MarkTaskScheduleCompleted(task.Id, wfInstance.CompleteTime.Value, nextExecuted.GetValueOrDefault());
+                        await _persistenceProvider.MarkTaskScheduleCompleted(task.Id, wfInstance.CompleteTime.Value, nextExecuted.Value);
                         _logger.LogInformation($"Task {task.Id} mark as completed with workflow {wfInstance.Id}");
                     }
 
                     if (wfInstance.CompleteTime == null && wfInstance.Status == WorkflowStatus.Complete)
                     {
-                        await _persistenceProvider.MarkTaskScheduleCompleted(task.Id, DateTime.Now, nextExecuted.GetValueOrDefault());
+                        await _persistenceProvider.MarkTaskScheduleCompleted(task.Id, DateTime.Now, nextExecuted.Value);
                         _logger.LogInformation($"Workflow {wfInstance.Id} is not completed but status is Completed, so task {task.Id} mark as completed.");
                     }
 
@@ -99,7 +99,7 @@ namespace WorkflowCore.Services.BackgroundTasks
             }
         }
 
-        private DateTime? GetNextExecutedTime(TaskSchedule taskSchedule)
+        private DateTime? GetNextExecutedTime(TaskSchedule taskSchedule, WorkflowInstance workflowInstance)
         {
             if (!taskSchedule.Retry.GetValueOrDefault())
                 return null;
@@ -111,7 +111,7 @@ namespace WorkflowCore.Services.BackgroundTasks
             if (taskSchedule.Periodicity == Models.Enums.Periodicity.Everyday && taskSchedule.StartTime <= currentDate)
             {
                 if (isDuringDay)
-                    return this.GetNextExecutedOnDuringDay(taskSchedule);
+                    return this.GetNextExecutedOnDuringDay(taskSchedule, workflowInstance);
 
                 return currentDate.AddDays(1);
             }
@@ -119,14 +119,15 @@ namespace WorkflowCore.Services.BackgroundTasks
             // Еженедельно.
             if (taskSchedule.Periodicity == Models.Enums.Periodicity.Weekly)
             {
-                var currentDayOfWeek = currentDate.DayOfWeek;
+                var currentDayOfWeek = (int)currentDate.DayOfWeek;
                 var planedDaysOfWeek = taskSchedule.DaysOfWeekSch.Split(',');
+                bool currentDayContainsInPlanedDay = planedDaysOfWeek.Contains(currentDayOfWeek.ToString());
 
-                if (!planedDaysOfWeek.Contains(currentDayOfWeek.ToString()))
-                    return taskSchedule.CompleteTime;
+                if (!currentDayContainsInPlanedDay && taskSchedule.LastExecuted.HasValue)
+                    return taskSchedule.NextExecuted;
 
                 if (isDuringDay)
-                    return this.GetNextExecutedOnDuringDay(taskSchedule);
+                    return this.GetNextExecutedOnDuringDay(taskSchedule, workflowInstance);
 
                 DateTime lastExecuted = taskSchedule.LastExecuted.GetValueOrDefault();
                 int intLastExecutedDayOfWeek = (int)lastExecuted.DayOfWeek;
@@ -141,12 +142,13 @@ namespace WorkflowCore.Services.BackgroundTasks
             {
                 var currentDay = currentDate.Day;
                 var daysOfMonth = taskSchedule.DaysOfMonthSch.Split(',');
+                bool currentDayContainsInDaysOfMonth = daysOfMonth.Contains(currentDay.ToString());
 
-                if (!daysOfMonth.Contains(currentDay.ToString()))
-                    return taskSchedule.CompleteTime;
+                if (!currentDayContainsInDaysOfMonth && taskSchedule.LastExecuted.HasValue)
+                    return taskSchedule.NextExecuted;
 
                 if (isDuringDay)
-                    return this.GetNextExecutedOnDuringDay(taskSchedule);
+                    return this.GetNextExecutedOnDuringDay(taskSchedule, workflowInstance);
 
                 string nextDaysOfMonth = daysOfMonth.SkipWhile(x => !x.Equals(currentDay.ToString())).Skip(1).DefaultIfEmpty(daysOfMonth[0]).FirstOrDefault();
 
@@ -171,7 +173,7 @@ namespace WorkflowCore.Services.BackgroundTasks
         /// </summary>
         /// <param name="taskSchedule">Расписание задачи.</param>
         /// <returns>Следующая дата запуска.</returns>
-        private DateTime? GetNextExecutedOnDuringDay(TaskSchedule taskSchedule)
+        private DateTime? GetNextExecutedOnDuringDay(TaskSchedule taskSchedule, WorkflowInstance workflowInstance)
         {
             if (taskSchedule.Interval != Models.Enums.Interval.DuringDay)
                 return null;
@@ -182,37 +184,36 @@ namespace WorkflowCore.Services.BackgroundTasks
             // Каждый день.
             if (taskSchedule.Periodicity == Models.Enums.Periodicity.Everyday && taskSchedule.StartTime <= currentDate)
             {
-                if (taskSchedule.LastExecuted == null && taskSchedule.NextExecuted == null)
-                    return taskSchedule.StartAt;
+                if (taskSchedule.LastExecuted.HasValue && taskSchedule.NextExecuted.HasValue)
+                    return taskSchedule.NextExecuted;
 
-                if (different.Minutes >= taskSchedule.TimePeriod && taskSchedule.CompleteTime.HasValue)
-                    return taskSchedule.LastExecuted.GetValueOrDefault().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
+                if (taskSchedule.LastExecuted == null && taskSchedule.NextExecuted == null)
+                    if (different.Minutes >= taskSchedule.TimePeriod && workflowInstance.CompleteTime.HasValue)
+                        return workflowInstance.CompleteTime.GetValueOrDefault().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
 
             }
 
             // Еженедельно.
             if (taskSchedule.Periodicity == Models.Enums.Periodicity.Weekly)
             {
-                var currentDayOfWeek = currentDate.DayOfWeek;
+                var currentDayOfWeek = (int)currentDate.DayOfWeek;
                 var planedDaysOfWeek = taskSchedule.DaysOfWeekSch.Split(',');
 
-                if (!planedDaysOfWeek.Contains(currentDayOfWeek.ToString()))
-                    return taskSchedule.CompleteTime;
+                bool currentDayContainsInPlanedDay = planedDaysOfWeek.Contains(currentDayOfWeek.ToString());
+
+                if (!currentDayContainsInPlanedDay && !taskSchedule.LastExecuted.HasValue)
+                    return taskSchedule.NextExecuted;
+
+                if (taskSchedule.LastExecuted.HasValue && taskSchedule.NextExecuted.HasValue)
+                    return taskSchedule.NextExecuted;
 
                 if (taskSchedule.LastExecuted == null && taskSchedule.NextExecuted == null)
-                    return taskSchedule.StartAt;
+                    if (different.Minutes >= taskSchedule.TimePeriod && workflowInstance.CompleteTime.HasValue)
+                    {
+                        return workflowInstance.CompleteTime.GetValueOrDefault().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
 
-                if (different.Minutes >= taskSchedule.TimePeriod && taskSchedule.CompleteTime.HasValue)
-                {
-                    return taskSchedule.LastExecuted.GetValueOrDefault().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
-
-                    // TODO: Переделать получение даты на текущий день, чтобы след. запуск не выходил на следующий день.
-                    //int intLastExecutedDayOfWeek = (int)taskSchedule.LastExecuted.GetValueOrDefault().DayOfWeek;
-                    //int intTodayDayOfWeek = (int)currentDayOfWeek;
-                    //DateTime nextExecuted = currentDate.AddDays(intLastExecutedDayOfWeek - intTodayDayOfWeek);
-
-                    //return nextExecuted;
-                }
+                        // TODO: Переделать получение даты на текущий день, чтобы след. запуск не выходил на следующий день.
+                    }
             }
 
             // По числам.
@@ -220,32 +221,21 @@ namespace WorkflowCore.Services.BackgroundTasks
             {
                 var currentDay = currentDate.Day;
                 var daysOfMonth = taskSchedule.DaysOfMonthSch.Split(',');
+                bool currentDayContainsInDaysOfMonth = daysOfMonth.Contains(currentDay.ToString());
 
-                if (!daysOfMonth.Contains(currentDay.ToString()))
-                    return taskSchedule.CompleteTime;
+                if (!currentDayContainsInDaysOfMonth && !taskSchedule.LastExecuted.HasValue)
+                     return taskSchedule.NextExecuted;
+
+                if (taskSchedule.LastExecuted.HasValue && taskSchedule.NextExecuted.HasValue)
+                    return taskSchedule.NextExecuted;
 
                 if (taskSchedule.LastExecuted == null && taskSchedule.NextExecuted == null)
-                    return taskSchedule.StartAt;
+                    if (different.Minutes >= taskSchedule.TimePeriod && workflowInstance.CompleteTime.HasValue)
+                    {
+                        return workflowInstance.CompleteTime.GetValueOrDefault().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
 
-                if (different.Minutes >= taskSchedule.TimePeriod && taskSchedule.CompleteTime.HasValue)
-                {
-                    return taskSchedule.LastExecuted.GetValueOrDefault().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
-
-                    // TODO: Переделать получение даты на текущий день, чтобы след. запуск не выходил на следующий день.
-                    //string nextDaysOfMonth = daysOfMonth.SkipWhile(x => !x.Equals(currentDay.ToString())).Skip(1).DefaultIfEmpty(daysOfMonth[0]).FirstOrDefault();
-
-                    //DateTime firstDayOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-                    //DateTime endDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
-
-                    //DateTime? nextDay = null;
-
-                    //if (!int.Parse(nextDaysOfMonth).Equals(endDayOfMonth.Day) && int.Parse(nextDaysOfMonth) != 1)
-                    //    nextDay = new DateTime(currentDate.Year, currentDate.Month, int.Parse(nextDaysOfMonth));
-                    //else
-                    //    nextDay = new DateTime(currentDate.Year, currentDate.AddMonths(1).Month, int.Parse(nextDaysOfMonth));
-
-                    //return nextDay;
-                }
+                        // TODO: Переделать получение даты на текущий день, чтобы след. запуск не выходил на следующий день.
+                    }
             }
 
             return null;

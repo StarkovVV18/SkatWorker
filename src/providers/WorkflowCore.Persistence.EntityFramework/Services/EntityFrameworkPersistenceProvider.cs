@@ -463,6 +463,7 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
                 firstRow.IsProcessed = false;
                 firstRow.CompleteTime = completeTime;
                 firstRow.NextExecuted = nextExecuted;
+                firstRow.LastExecuted = completeTime;
 
                 await db.SaveChangesAsync(cancellationToken);
             }
