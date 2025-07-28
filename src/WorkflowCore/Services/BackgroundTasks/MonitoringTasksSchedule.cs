@@ -33,7 +33,7 @@ namespace WorkflowCore.Services.BackgroundTasks
 
         public void Start()
         {
-            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunMonitoring), null, TimeSpan.FromSeconds(0), TimeSpan.FromMinutes(5));
+            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunMonitoring), null, TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(2));
         }
 
         public void Stop()
@@ -158,9 +158,27 @@ namespace WorkflowCore.Services.BackgroundTasks
 
             // Каждый день.
             if (taskSchedule.Periodicity == Models.Enums.Periodicity.Everyday
-                && taskSchedule.StartTime <= currentDate
-                && (!taskSchedule.NextExecuted.HasValue || taskSchedule.NextExecuted.Value == currentDate))
+                && taskSchedule.StartTime <= currentDate)
             {
+                if (taskSchedule.Interval == Models.Enums.Interval.DuringDay)
+                {
+                    var taskPeriod = taskSchedule.TimePeriod;
+                    var lastExecute = taskSchedule.LastExecuted;
+                    var nextExecute = taskSchedule.NextExecuted;
+                    var different = currentDate.Subtract(lastExecute.GetValueOrDefault());
+
+                    if (lastExecute == null && nextExecute == null)
+                    {
+                        this.StartWorkflowFromSchedule(taskSchedule);
+                        return;
+                    }
+
+                    if (different.Minutes >= taskPeriod && taskSchedule.CompleteTime.HasValue)
+                        this.StartWorkflowFromSchedule(taskSchedule);
+
+                    return;
+                }
+
                 this.StartWorkflowFromSchedule(taskSchedule);
                 return;
             }
@@ -198,25 +216,6 @@ namespace WorkflowCore.Services.BackgroundTasks
 
                 return;
             }
-
-            //if (taskSchedule.Interval == Models.Enums.Interval.DuringDay)
-            //{
-            //    var taskPeriod = taskSchedule.TimePeriod;
-            //    var lastExecute = taskSchedule.LastExecuted;
-            //    var nextExecute = taskSchedule.NextExecuted;
-            //    var different = currentDate.Subtract(lastExecute.GetValueOrDefault());
-
-            //    if (lastExecute == null && nextExecute == null)
-            //    {
-            //        this.StartWorkflowFromSchedule(taskSchedule);
-            //        return;
-            //    }
-
-            //    if (different.Minutes >= taskPeriod && taskSchedule.CompleteTime.HasValue)
-            //        this.StartWorkflowFromSchedule(taskSchedule);
-
-            //    return;
-            //}
         }
     }
 }

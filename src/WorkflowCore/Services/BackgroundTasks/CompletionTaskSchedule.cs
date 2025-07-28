@@ -28,7 +28,7 @@ namespace WorkflowCore.Services.BackgroundTasks
 
         public void Start()
         {
-            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunTaskSchedule), null, TimeSpan.FromSeconds(0), TimeSpan.FromMinutes(2));
+            _runnableTaskScheduleTimer = new Timer(new TimerCallback(RunTaskSchedule), null, TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(5));
         }
 
         public void Stop()
@@ -54,7 +54,7 @@ namespace WorkflowCore.Services.BackgroundTasks
         /// <returns></returns>
         private async Task RunTaskSchedulePoller()
         {
-            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.IsProcessed.GetValueOrDefault() && x.CompleteTime == null);
+            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.IsProcessed.GetValueOrDefault());
 
             if (!taskSchedules.Any())
             {
@@ -75,9 +75,9 @@ namespace WorkflowCore.Services.BackgroundTasks
 
                     var nextExecuted = this.GetNextExecutedTime(task, wfInstance);
 
-                    if (wfInstance.CompleteTime != null && (task.CompleteTime == null && task.IsProcessed.GetValueOrDefault()))
+                    if (wfInstance.CompleteTime != null)
                     {
-                        await _persistenceProvider.MarkTaskScheduleCompleted(task.Id, wfInstance.CompleteTime.Value, nextExecuted.Value);
+                        await _persistenceProvider.MarkTaskScheduleCompleted(task.Id, wfInstance.CompleteTime.Value.ToLocalTime(), nextExecuted.Value);
                         _logger.LogInformation($"Task {task.Id} mark as completed with workflow {wfInstance.Id}");
                     }
 
@@ -184,12 +184,12 @@ namespace WorkflowCore.Services.BackgroundTasks
             // Каждый день.
             if (taskSchedule.Periodicity == Models.Enums.Periodicity.Everyday && taskSchedule.StartTime <= currentDate)
             {
-                if (taskSchedule.LastExecuted.HasValue && taskSchedule.NextExecuted.HasValue)
-                    return taskSchedule.NextExecuted;
+                if (taskSchedule.Interval == Models.Enums.Interval.OnceADay)
+                    return taskSchedule.LastExecuted.Value.AddDays(1);
 
-                if (taskSchedule.LastExecuted == null && taskSchedule.NextExecuted == null)
+                if (taskSchedule.Interval == Models.Enums.Interval.DuringDay)
                     if (different.Minutes >= taskSchedule.TimePeriod && workflowInstance.CompleteTime.HasValue)
-                        return workflowInstance.CompleteTime.GetValueOrDefault().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
+                        return workflowInstance.CompleteTime.GetValueOrDefault().ToLocalTime().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
 
             }
 
@@ -210,7 +210,7 @@ namespace WorkflowCore.Services.BackgroundTasks
                 if (taskSchedule.LastExecuted == null && taskSchedule.NextExecuted == null)
                     if (different.Minutes >= taskSchedule.TimePeriod && workflowInstance.CompleteTime.HasValue)
                     {
-                        return workflowInstance.CompleteTime.GetValueOrDefault().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
+                        return workflowInstance.CompleteTime.GetValueOrDefault().ToLocalTime().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
 
                         // TODO: Переделать получение даты на текущий день, чтобы след. запуск не выходил на следующий день.
                     }
@@ -232,7 +232,7 @@ namespace WorkflowCore.Services.BackgroundTasks
                 if (taskSchedule.LastExecuted == null && taskSchedule.NextExecuted == null)
                     if (different.Minutes >= taskSchedule.TimePeriod && workflowInstance.CompleteTime.HasValue)
                     {
-                        return workflowInstance.CompleteTime.GetValueOrDefault().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
+                        return workflowInstance.CompleteTime.GetValueOrDefault().ToLocalTime().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
 
                         // TODO: Переделать получение даты на текущий день, чтобы след. запуск не выходил на следующий день.
                     }
