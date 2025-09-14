@@ -23,7 +23,7 @@ namespace WorkflowCore.Models
         public WorkflowOptions(IServiceCollection services)
         {
             Services = services;
-            PollInterval = TimeSpan.FromSeconds(10);
+            PollInterval = TimeSpan.FromSeconds(5);
             IdleTime = TimeSpan.FromMilliseconds(100);
             ErrorRetryInterval = TimeSpan.FromSeconds(60);
 
