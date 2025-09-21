@@ -92,6 +92,7 @@ namespace WorkflowCore.Services.BackgroundTasks
                 catch (Exception ex)
                 {
                     _logger.LogError($"Workflow {task.WorkflowId} failed to mark completed. Exception message {ex.Message}");
+                    _logger.LogError($"Workflow {task.WorkflowId} failed to mark completed. Stack trace {ex.StackTrace}");
                     await _persistenceProvider.MarkTaskScheduleUnCompleted(task.Id);
 
                     continue;
@@ -215,12 +216,12 @@ namespace WorkflowCore.Services.BackgroundTasks
                 }
 
                 if (taskSchedule.LastExecuted == null && taskSchedule.NextExecuted == null)
-                    if (different.Minutes >= taskSchedule.TimePeriod && workflowInstance.CompleteTime.HasValue)
-                    {
+                    //if (different.Minutes >= taskSchedule.TimePeriod && workflowInstance.CompleteTime.HasValue)
+                    //{
                         return workflowInstance.CompleteTime.GetValueOrDefault().ToLocalTime().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
 
                         // TODO: Переделать получение даты на текущий день, чтобы след. запуск не выходил на следующий день.
-                    }
+                    //}
             }
 
             // По числам.
