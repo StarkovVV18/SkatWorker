@@ -205,7 +205,14 @@ namespace WorkflowCore.Services.BackgroundTasks
                     return taskSchedule.NextExecuted;
 
                 if (taskSchedule.LastExecuted.HasValue && taskSchedule.NextExecuted.HasValue)
-                    return taskSchedule.NextExecuted;
+                {
+                    //var differentNextExecuted = currentDate.Subtract(taskSchedule.NextExecuted.GetValueOrDefault());
+
+                    //if (differentNextExecuted.Minutes >= taskSchedule.TimePeriod && workflowInstance.CompleteTime.HasValue)
+                        return workflowInstance.CompleteTime.GetValueOrDefault().ToLocalTime().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
+
+                    //return taskSchedule.NextExecuted;
+                }
 
                 if (taskSchedule.LastExecuted == null && taskSchedule.NextExecuted == null)
                     if (different.Minutes >= taskSchedule.TimePeriod && workflowInstance.CompleteTime.HasValue)
@@ -227,7 +234,7 @@ namespace WorkflowCore.Services.BackgroundTasks
                      return taskSchedule.NextExecuted;
 
                 if (taskSchedule.LastExecuted.HasValue && taskSchedule.NextExecuted.HasValue)
-                    return taskSchedule.NextExecuted;
+                    return workflowInstance.CompleteTime.GetValueOrDefault().ToLocalTime().AddMinutes(taskSchedule.TimePeriod.GetValueOrDefault());
 
                 if (taskSchedule.LastExecuted == null && taskSchedule.NextExecuted == null)
                     if (different.Minutes >= taskSchedule.TimePeriod && workflowInstance.CompleteTime.HasValue)

@@ -174,7 +174,11 @@ namespace WorkflowCore.Services.BackgroundTasks
                     }
 
                     if (different.Minutes >= taskPeriod && taskSchedule.CompleteTime.HasValue)
+                    {
                         this.StartWorkflowFromSchedule(taskSchedule);
+                        _logger.LogInformation(string.Format("Start task {0} everyday and during day", taskSchedule.Id));
+                    }
+
 
                     return;
                 }
@@ -199,10 +203,40 @@ namespace WorkflowCore.Services.BackgroundTasks
                 var currentDayOfWeek = (int)currentDate.DayOfWeek;
                 var daysOfWeek = taskSchedule.DaysOfWeekSch.Split(',');
 
-                if (daysOfWeek.Contains(currentDayOfWeek.ToString()))
-                    this.StartWorkflowFromSchedule(taskSchedule);
+                if (!daysOfWeek.Contains(currentDayOfWeek.ToString()))
+                    return;
 
-                return;
+                if (taskSchedule.Interval == Models.Enums.Interval.DuringDay)
+                {
+                    var taskPeriod = taskSchedule.TimePeriod;
+                    var lastExecute = taskSchedule.LastExecuted;
+                    var nextExecute = taskSchedule.NextExecuted;
+                    var different = currentDate.Subtract(lastExecute.GetValueOrDefault());
+
+                    if (lastExecute == null && nextExecute == null)
+                    {
+                        this.StartWorkflowFromSchedule(taskSchedule);
+                        return;
+                    }
+
+                    if (different.Minutes >= taskPeriod && taskSchedule.CompleteTime.HasValue)
+                    {
+                        this.StartWorkflowFromSchedule(taskSchedule);
+                        _logger.LogInformation(string.Format("Start task {0} weekly and during day", taskSchedule.Id));
+                    }
+
+                    return;
+                }
+
+                if (taskSchedule.Interval == Models.Enums.Interval.OnceADay)
+                {
+                    if ((!taskSchedule.NextExecuted.HasValue || !taskSchedule.LastExecuted.HasValue)
+                        || (taskSchedule.LastExecuted == currentDate.AddDays(-1) && taskSchedule.NextExecuted == currentDate))
+                    {
+                        this.StartWorkflowFromSchedule(taskSchedule);
+                        _logger.LogInformation(string.Format("Start task {0} weekly and once a day", taskSchedule.Id));
+                    }    
+                }
             }
 
             // По числам.
@@ -211,10 +245,40 @@ namespace WorkflowCore.Services.BackgroundTasks
                 var currentDay = currentDate.Day;
                 var daysOfMonth = taskSchedule.DaysOfMonthSch.Split(',');
 
-                if (daysOfMonth.Contains(currentDay.ToString()))
-                    this.StartWorkflowFromSchedule(taskSchedule);
+                if (!daysOfMonth.Contains(currentDay.ToString()))
+                    return;
 
-                return;
+                if (taskSchedule.Interval == Models.Enums.Interval.DuringDay)
+                {
+                    var taskPeriod = taskSchedule.TimePeriod;
+                    var lastExecute = taskSchedule.LastExecuted;
+                    var nextExecute = taskSchedule.NextExecuted;
+                    var different = currentDate.Subtract(lastExecute.GetValueOrDefault());
+
+                    if (lastExecute == null && nextExecute == null)
+                    {
+                        this.StartWorkflowFromSchedule(taskSchedule);
+                        return;
+                    }
+
+                    if (different.Minutes >= taskPeriod && taskSchedule.CompleteTime.HasValue)
+                    {
+                        this.StartWorkflowFromSchedule(taskSchedule);
+                        _logger.LogInformation(string.Format("Start task {0} day of month and during day", taskSchedule.Id));
+                    }
+
+                    return;
+                }
+
+                if (taskSchedule.Interval == Models.Enums.Interval.OnceADay)
+                {
+                    if ((!taskSchedule.NextExecuted.HasValue || !taskSchedule.LastExecuted.HasValue)
+                        || (taskSchedule.LastExecuted == currentDate.AddDays(-1) && taskSchedule.NextExecuted == currentDate))
+                    {
+                        this.StartWorkflowFromSchedule(taskSchedule);
+                        _logger.LogInformation(string.Format("Start task {0} day of month and once a day", taskSchedule.Id));
+                    }
+                }
             }
         }
     }
