@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -121,7 +122,7 @@ namespace WorkflowCore.Services.BackgroundTasks
             if (taskSchedule.Periodicity == Models.Enums.Periodicity.Weekly)
             {
                 var currentDayOfWeek = (int)currentDate.DayOfWeek;
-                var planedDaysOfWeek = taskSchedule.DaysOfWeekSch.Split(',');
+                var planedDaysOfWeek = taskSchedule.DaysOfWeekSch.Split(',').ToList();
                 bool currentDayContainsInPlanedDay = planedDaysOfWeek.Contains(currentDayOfWeek.ToString());
 
                 if (!currentDayContainsInPlanedDay && taskSchedule.LastExecuted.HasValue)
@@ -130,10 +131,8 @@ namespace WorkflowCore.Services.BackgroundTasks
                 if (isDuringDay)
                     return this.GetNextExecutedOnDuringDay(taskSchedule, workflowInstance);
 
-                DateTime lastExecuted = taskSchedule.LastExecuted.GetValueOrDefault();
-                int intLastExecutedDayOfWeek = (int)lastExecuted.DayOfWeek;
-                int intTodayDayOfWeek = (int)currentDayOfWeek;
-                DateTime nextExecuted = currentDate.AddDays(intLastExecutedDayOfWeek - intTodayDayOfWeek);
+                DateTime lastExecuted = workflowInstance.CompleteTime.GetValueOrDefault();
+                DateTime nextExecuted = this.NextDateTimeByDayOfWeek(lastExecuted, planedDaysOfWeek);
 
                 return nextExecuted;
             }
@@ -159,15 +158,35 @@ namespace WorkflowCore.Services.BackgroundTasks
                 DateTime? nextDay = null;
 
                 if (!int.Parse(nextDaysOfMonth).Equals(endDayOfMonth.Day) && int.Parse(nextDaysOfMonth) != 1)
-                    nextDay = new DateTime(currentDate.Year, currentDate.Month, int.Parse(nextDaysOfMonth));
+                    nextDay = new DateTime(currentDate.Year, currentDate.Month, int.Parse(nextDaysOfMonth),
+                        workflowInstance.CompleteTime.Value.Hour,
+                        workflowInstance.CompleteTime.Value.Minute,
+                        workflowInstance.CompleteTime.Value.Second);
                 else
-                    nextDay = new DateTime(currentDate.Year, currentDate.AddMonths(1).Month, int.Parse(nextDaysOfMonth));
+                    nextDay = new DateTime(currentDate.Year, currentDate.AddMonths(1).Month, int.Parse(nextDaysOfMonth),
+                        workflowInstance.CompleteTime.Value.Hour,
+                        workflowInstance.CompleteTime.Value.Minute,
+                        workflowInstance.CompleteTime.Value.Second);
 
                 return nextDay;
             }
 
             return null;
         }
+
+        /// <summary>
+        /// Определить следующей день выполнения задания на основе дня недели.
+        /// </summary>
+        /// <param name="target">Дата, от которой искать следующую дату.</param>
+        /// <param name="validDaysOfWeek">Список дней недели</param>
+        /// <returns>Следующая дата выполнения.</returns>
+        private DateTime NextDateTimeByDayOfWeek(DateTime target, List<string> validDaysOfWeek)
+        {
+            return Enumerable.Range(1, 7)
+                .Select(n => target.AddDays(n))
+                .First(date => validDaysOfWeek.Contains(((int)date.DayOfWeek).ToString()));
+        }
+
 
         /// <summary>
         /// Получить следующее время выполнения в течение дня.
