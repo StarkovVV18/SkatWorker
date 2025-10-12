@@ -78,7 +78,7 @@ namespace WorkflowCore.Services.BackgroundTasks
 
                     if (wfInstance.CompleteTime != null)
                     {
-                        await _persistenceProvider.MarkTaskScheduleCompleted(task.Id, wfInstance.CompleteTime.Value.ToLocalTime(), nextExecuted.Value);
+                        await _persistenceProvider.MarkTaskScheduleCompleted(task.Id, wfInstance.CompleteTime.Value.ToLocalTime(), nextExecuted.Value.ToLocalTime());
                         _logger.LogInformation($"Task {task.Id} mark as completed with workflow {wfInstance.Id}");
                     }
 
