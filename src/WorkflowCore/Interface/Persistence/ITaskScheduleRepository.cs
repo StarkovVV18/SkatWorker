@@ -11,6 +11,8 @@ namespace WorkflowCore.Interface.Persistence
     {
         Task<TaskSchedule> CreateTaskSchedule(TaskSchedule taskSchedule, CancellationToken cancellationToken = default);
 
+        Task<bool> TerminateTaskSchedule(string id, CancellationToken cancellationToken = default);
+
         Task<TaskSchedule> GetTaskSchedule (string id, CancellationToken cancellationToken = default);
 
         Task<IEnumerable<TaskSchedule>> GetTaskSchedules(CancellationToken cancellationToken = default);

@@ -100,6 +100,17 @@ namespace WorkflowCore.Models
         /// </summary>
         public string DaysOfMonthSch { get; set; }
 
+        /// <summary>
+        /// Состояние расписания.
+        /// </summary>
+        public ScheduleStatus Status { get; set; }
+    }
 
+    public enum ScheduleStatus
+    {
+        Created = 0,
+        Runnable = 1,
+        Complete = 2,
+        Terminated = 3,
     }
 }

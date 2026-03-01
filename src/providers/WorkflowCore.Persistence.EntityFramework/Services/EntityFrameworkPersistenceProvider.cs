@@ -367,6 +367,26 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
             }
         }
 
+        public async Task<bool> TerminateTaskSchedule(string id, CancellationToken cancellationToken = default)
+        {
+            using (var db = ConstructDbContext())
+            {
+                var existingEntity = db.Set<PersistedTaskSchedule>()
+                    .Where(x => x.Id == id)
+                    .AsTracking();
+
+                if (!existingEntity.Any())
+                    return false;
+
+                var firstRow = existingEntity.FirstOrDefault();
+                firstRow.IsProcessed = false;
+                firstRow.Status = ScheduleStatus.Terminated;
+
+                await db.SaveChangesAsync(cancellationToken);
+                return true;
+            }
+        }
+
         public async Task<TaskSchedule> GetTaskSchedule(string id, CancellationToken cancellationToken = default)
         {
             using (var db = ConstructDbContext())

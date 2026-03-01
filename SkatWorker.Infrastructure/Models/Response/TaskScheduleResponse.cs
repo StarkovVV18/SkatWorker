@@ -1,4 +1,6 @@
-﻿namespace SkatWorker.Infrastructure.Models.Response
+﻿using WorkflowCore.Models;
+
+namespace SkatWorker.Infrastructure.Models.Response
 {
     /// <summary>
     /// Запись расписания задачи.
@@ -49,5 +51,10 @@
         /// Результат выполнения.
         /// </summary>
         public string Result { get; set; }
+
+        /// <summary>
+        /// Состояние записи расписания.
+        /// </summary>
+        public ScheduleStatus Status { get; set; }
     }
 }

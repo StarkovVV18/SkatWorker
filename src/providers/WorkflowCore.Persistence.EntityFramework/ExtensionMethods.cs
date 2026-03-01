@@ -96,6 +96,7 @@ namespace WorkflowCore.Persistence.EntityFramework
             result.LastExecuted = instance.LastExecuted;
             result.NextExecuted = instance.NextExecuted;
             result.Retry = instance.Retry;
+            result.Status = instance.Status;
 
             return result;
         }
@@ -126,6 +127,7 @@ namespace WorkflowCore.Persistence.EntityFramework
             result.LastExecuted = instance.LastExecuted;
             result.NextExecuted = instance.NextExecuted;
             result.Retry = instance.Retry;
+            result.Status = instance.Status;
 
             return result;
         }

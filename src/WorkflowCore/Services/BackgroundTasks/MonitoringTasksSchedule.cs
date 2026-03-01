@@ -94,7 +94,8 @@ namespace WorkflowCore.Services.BackgroundTasks
         /// </summary>
         private async Task StartOneTimeTasks()
         {
-            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.StartTime <= DateTime.Now
+            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.Status != ScheduleStatus.Terminated
+                && x.StartTime <= DateTime.Now
                 && x.CompleteTime == null
                 && !x.IsProcessed.GetValueOrDefault()
                 && !x.Retry.GetValueOrDefault());
@@ -115,7 +116,9 @@ namespace WorkflowCore.Services.BackgroundTasks
         /// <remarks>Запускает задачи, у которых настроено расписание повторения.</remarks>
         private async Task StartTasksInPeriod()
         {
-            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.Retry.GetValueOrDefault() && !x.IsProcessed.GetValueOrDefault());
+            var taskSchedules = await _persistenceProvider.GetTaskSchedules(x => x.Status != ScheduleStatus.Terminated
+            && x.Retry.GetValueOrDefault()
+            && !x.IsProcessed.GetValueOrDefault());
 
             if (!taskSchedules.Any())
             {

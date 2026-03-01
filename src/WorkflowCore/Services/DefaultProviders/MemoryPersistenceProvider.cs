@@ -366,6 +366,11 @@ namespace WorkflowCore.Services
         {
             throw new NotImplementedException();
         }
+
+        public Task<bool> TerminateTaskSchedule(string id, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously

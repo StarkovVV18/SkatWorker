@@ -29,7 +29,8 @@ namespace SkatWorker.Infrastructure.Mapper
                 .ForMember(dest => dest.TimePeriod, opt => opt.MapFrom(src => src.TimePeriod))
                 .ForMember(dest => dest.Periodicity, opt => opt.MapFrom(src => src.Periodicity))
                 .ForMember(dest => dest.DaysOfMonthSch, opt => opt.MapFrom(src => src.DaysOfMonthSch))
-                .ForMember(dest => dest.DaysOfWeekSch, opt => opt.MapFrom(src => src.DaysOfWeekSch));
+                .ForMember(dest => dest.DaysOfWeekSch, opt => opt.MapFrom(src => src.DaysOfWeekSch))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
 
             CreateMap<TaskSchedule, TaskScheduleResponse>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
@@ -39,7 +40,8 @@ namespace SkatWorker.Infrastructure.Mapper
                 .ForMember(dest => dest.Data, opt => opt.MapFrom(src => src.Data))
                 .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
                 .ForMember(dest => dest.CompleteTime, opt => opt.MapFrom(src => src.CompleteTime))
-                .ForMember(dest => dest.Result, opt => opt.MapFrom(src => src.Result));
+                .ForMember(dest => dest.Result, opt => opt.MapFrom(src => src.Result))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
 
             CreateMap<StepResult, StepResultResponse>();
         }

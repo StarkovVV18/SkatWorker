@@ -1,4 +1,6 @@
-﻿using WorkflowCore.Models.Enums;
+﻿using WorkflowCore.Models;
+using WorkflowCore.Models.Enums;
+using static WorkflowCore.Models.TaskSchedule;
 
 namespace SkatWorker.Infrastructure.Models.Request
 {
@@ -56,5 +58,10 @@ namespace SkatWorker.Infrastructure.Models.Request
         /// День месяца запуска задачи.
         /// </summary>
         public string DaysOfMonthSch { get; set; }
+
+        /// <summary>
+        /// Состояние расписания.
+        /// </summary>
+        public ScheduleStatus Status { get; set; }
     }
 }

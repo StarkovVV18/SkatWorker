@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using WorkflowCore.Models;
 using WorkflowCore.Models.Enums;
+using static WorkflowCore.Models.TaskSchedule;
 
 namespace WorkflowCore.Persistence.EntityFramework.Models
 {
@@ -100,5 +102,10 @@ namespace WorkflowCore.Persistence.EntityFramework.Models
         /// День месяца запуска задачи.
         /// </summary>
         public string DaysOfMonthSch { get; set; }
+
+        /// <summary>
+        /// Состояние расписания.
+        /// </summary>
+        public ScheduleStatus Status { get; set; }
     }
 }
