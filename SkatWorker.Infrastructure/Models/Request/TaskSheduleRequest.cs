@@ -58,10 +58,5 @@ namespace SkatWorker.Infrastructure.Models.Request
         /// День месяца запуска задачи.
         /// </summary>
         public string DaysOfMonthSch { get; set; }
-
-        /// <summary>
-        /// Состояние расписания.
-        /// </summary>
-        public ScheduleStatus Status { get; set; }
     }
 }
